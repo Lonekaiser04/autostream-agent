@@ -33,7 +33,7 @@ autostream_agent/
 
 ### 1. Clone the repo
 ```bash
-git clone https://github.com/your-username/autostream-agent.git
+git clone https://github.com/lonekaiser04/autostream-agent.git
 cd autostream-agent
 ```
 

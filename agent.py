@@ -1,6 +1,6 @@
 """
 AutoStream Conversational AI Agent
-Social-to-Lead Agentic Workflow using LangGraph + groq
+Social-to-Lead Agentic Workflow using LangGraph + groq + local RAG
 """
 
 import json
@@ -16,9 +16,7 @@ from rag import retrieve_knowledge
 from dotenv import load_dotenv
 load_dotenv()
 
-# ─────────────────────────────────────────────
 # 1. STATE DEFINITION
-# ─────────────────────────────────────────────
 
 class AgentState(TypedDict):
     messages: Annotated[list, add_messages]   # full conversation history
@@ -30,9 +28,7 @@ class AgentState(TypedDict):
     collecting_lead: bool                      # flag: are we in lead collection mode?
 
 
-# ─────────────────────────────────────────────
 # 2. LLM SETUP
-# ─────────────────────────────────────────────
 
 llm = ChatGroq(
     model="llama-3.1-8b-instant",
@@ -42,9 +38,7 @@ llm = ChatGroq(
 )
 
 
-# ─────────────────────────────────────────────
 # 3. INTENT DETECTION NODE
-# ─────────────────────────────────────────────
 
 INTENT_SYSTEM_PROMPT = """You are an intent classifier for AutoStream, a SaaS video editing platform.
 
@@ -84,9 +78,7 @@ def detect_intent(state: AgentState) -> AgentState:
     return {**state, "intent": intent}
 
 
-# ─────────────────────────────────────────────
 # 4. RAG RETRIEVAL + RESPONSE NODE
-# ─────────────────────────────────────────────
 
 RAG_SYSTEM_PROMPT = """You are AutoStream's friendly AI sales assistant.
 AutoStream is a SaaS platform offering automated video editing for content creators.
@@ -116,9 +108,7 @@ def rag_response(state: AgentState) -> AgentState:
     return {**state, "messages": new_messages}
 
 
-# ─────────────────────────────────────────────
 # 5. LEAD COLLECTION NODE
-# ─────────────────────────────────────────────
 
 LEAD_SYSTEM_PROMPT = """You are AutoStream's AI assistant helping qualify a potential customer.
 
@@ -152,14 +142,24 @@ def _extract_platform(text: str) -> Optional[str]:
     return None
 
 def _extract_name(text: str, existing_name: Optional[str]) -> Optional[str]:
-    """Heuristic: if short phrase with no @ and no platform keyword, treat as name."""
+    """Heuristic: only extract if it looks like a real name."""
     if existing_name:
         return existing_name
+    
     text = text.strip()
-    if len(text.split()) <= 4 and "@" not in text:
-        lower = text.lower()
-        if not any(kw in lower for kw in PLATFORM_KEYWORDS):
-            return text.title()
+    
+    # Don't extract common casual responses as names
+    casual_responses = ["yes", "yeah", "sure", "ok", "okay", "interested", "yes i am interested", "i am interested"]
+    if text.lower() in casual_responses:
+        return None
+    
+    # Name should be 1-3 words, no @, no numbers, not too short/long
+    words = text.split()
+    if 1 <= len(words) <= 3 and "@" not in text:
+        if not any(char.isdigit() for char in text):
+            lower = text.lower()
+            if not any(kw in lower for kw in PLATFORM_KEYWORDS):
+                return text.title()
     return None
 
 
@@ -210,9 +210,7 @@ def collect_lead(state: AgentState) -> AgentState:
     }
 
 
-# ─────────────────────────────────────────────
 # 6. GREETING NODE
-# ─────────────────────────────────────────────
 
 GREETING_SYSTEM_PROMPT = """You are AutoStream's cheerful AI assistant.
 AutoStream provides automated AI-powered video editing for content creators.
@@ -230,9 +228,7 @@ def greet(state: AgentState) -> AgentState:
     return {**state, "messages": new_messages}
 
 
-# ─────────────────────────────────────────────
 # 7. ROUTING LOGIC
-# ─────────────────────────────────────────────
 
 def route(state: AgentState) -> str:
     """Decide next node after intent detection."""
@@ -248,10 +244,7 @@ def route(state: AgentState) -> str:
         return "greet"
 
 
-# ─────────────────────────────────────────────
 # 8. GRAPH CONSTRUCTION
-# ─────────────────────────────────────────────
-
 def build_graph() -> StateGraph:
     graph = StateGraph(AgentState)
 
@@ -279,10 +272,8 @@ def build_graph() -> StateGraph:
     return graph.compile()
 
 
-# ─────────────────────────────────────────────
-# 9. MAIN CHAT LOOP
-# ─────────────────────────────────────────────
 
+# 9. MAIN CHAT LOOP
 def chat():
     print("=" * 60)
     print("  AutoStream AI Agent  |  Type 'quit' to exit")
