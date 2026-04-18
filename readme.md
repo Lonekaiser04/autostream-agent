@@ -133,4 +133,4 @@ The RAG module loads `knowledge.json` at startup, flattens it into tagged text c
 
 ## License
 
-MIT — Built for the ServiceHive × Inflx ML Intern Assignment.
+MIT
