@@ -130,6 +130,9 @@ The RAG module loads `knowledge.json` at startup, flattens it into tagged text c
 | Real-world deployability | WhatsApp webhook architecture documented above |
 
 ---
+## View Demo 
+https://drive.google.com/file/d/1wAIg-ZKdzGUPENxcwnfWFjv6HDhE9gUh/view?usp=drivesdk
+
 
 ## License
 
