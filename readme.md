@@ -1,5 +1,5 @@
 # AutoStream AI Agent 🎬
-### Social-to-Lead Agentic Workflow | ServiceHive × Inflx Assignment
+### Social-to-Lead Agentic Workflow 
 
 ---
 
