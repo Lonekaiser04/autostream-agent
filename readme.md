@@ -92,6 +92,14 @@ To deploy this agent on WhatsApp:
 4. **State Persistence**: Store conversation state per phone number in Redis
 5. **Template Messages**: Use WhatsApp templates for lead capture confirmation
 
+## Optional X/Twitter Source Evidence
+
+For campaigns where AutoStream answers questions from recent X/Twitter posts,
+collect a small reviewed source packet before the LangGraph run stores a lead.
+The recipe in [`docs/x-twitter-source-evidence.md`](docs/x-twitter-source-evidence.md)
+shows how to keep social evidence separate from the lead state while still
+letting the RAG node cite campaign, competitor, or audience signals.
+
 
 
 ## Architecture Explanation
